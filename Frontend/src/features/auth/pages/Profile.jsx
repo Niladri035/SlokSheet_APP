@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { updateProfile, getCurrentUser } from '../services/auth.api'
 import { togglePrivateAccount } from '../../posts/services/post.api'
+import PageWrapper from '../../shared/PageWrapper'
 import "../style/profile.scss"
 
 const Profile = () => {
@@ -84,94 +85,96 @@ const Profile = () => {
     }
 
     return (
-        <main className="profile-page">
-            <div className="profile-container">
-                <div className="profile-header">
-                    <img src={preview} alt="" className="profile-image" />
-                    <div className="profile-info">
-                        <h1>{userInfo?.username}</h1>
-                        <p>{userInfo?.bio || "No bio added"}</p>
-                    </div>
-                </div>
-
-                {isEditing ? (
-                    <form onSubmit={handleUpdateProfile} className="edit-form">
-                        <div className="form-group">
-                            <label>Bio</label>
-                            <textarea
-                                value={bio}
-                                onChange={(e) => setBio(e.target.value)}
-                                placeholder="Tell us about yourself..."
-                                maxLength="150"
-                            />
-                            <small>{bio.length}/150</small>
+        <PageWrapper>
+            <main className="profile-page">
+                <div className="profile-container">
+                    <div className="profile-header">
+                        <img src={preview} alt="" className="profile-image" />
+                        <div className="profile-info">
+                            <h1>{userInfo?.username}</h1>
+                            <p>{userInfo?.bio || "No bio added"}</p>
                         </div>
+                    </div>
 
-                        <div className="form-group">
-                            <label>Profile Photo</label>
-                            <div className="image-input">
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    id="profile-image"
+                    {isEditing ? (
+                        <form onSubmit={handleUpdateProfile} className="edit-form">
+                            <div className="form-group">
+                                <label>Bio</label>
+                                <textarea
+                                    value={bio}
+                                    onChange={(e) => setBio(e.target.value)}
+                                    placeholder="Tell us about yourself..."
+                                    maxLength="150"
                                 />
-                                <label htmlFor="profile-image" className="file-label">
-                                    Choose Photo
-                                </label>
+                                <small>{bio.length}/150</small>
                             </div>
 
-                            {preview && (
-                                <div className="preview-container">
-                                    <img src={preview} alt="Preview" className="preview-img" />
+                            <div className="form-group">
+                                <label>Profile Photo</label>
+                                <div className="image-input">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        id="profile-image"
+                                    />
+                                    <label htmlFor="profile-image" className="file-label">
+                                        Choose Photo
+                                    </label>
                                 </div>
-                            )}
-                        </div>
 
-                        <div className="button-group">
-                            <button type="submit" className="button primary-button" disabled={loading}>
-                                {loading ? "Saving..." : "Save Changes"}
-                            </button>
-                            <button 
-                                type="button" 
-                                className="button secondary-button"
-                                onClick={() => {
-                                    setIsEditing(false)
-                                    setBio(userInfo?.bio || "")
-                                    setProfileImage(null)
-                                    setPreview(userInfo?.profileImage)
-                                }}
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-                ) : (
-                    <>
-                        <div className="privacy-settings">
-                            <h2>Privacy Settings</h2>
-                            <div className="privacy-toggle">
-                                <span>Account Status: {isPrivate ? "Private" : "Public"}</span>
+                                {preview && (
+                                    <div className="preview-container">
+                                        <img src={preview} alt="Preview" className="preview-img" />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="button-group">
+                                <button type="submit" className="button primary-button" disabled={loading}>
+                                    {loading ? "Saving..." : "Save Changes"}
+                                </button>
                                 <button 
-                                    className="button primary-button"
-                                    onClick={handleTogglePrivate}
-                                    disabled={loading}
+                                    type="button" 
+                                    className="button secondary-button"
+                                    onClick={() => {
+                                        setIsEditing(false)
+                                        setBio(userInfo?.bio || "")
+                                        setProfileImage(null)
+                                        setPreview(userInfo?.profileImage)
+                                    }}
                                 >
-                                    {loading ? "Updating..." : isPrivate ? "Make Public" : "Make Private"}
+                                    Cancel
                                 </button>
                             </div>
-                        </div>
+                        </form>
+                    ) : (
+                        <>
+                            <div className="privacy-settings">
+                                <h2>Privacy Settings</h2>
+                                <div className="privacy-toggle">
+                                    <span>Account Status: {isPrivate ? "Private" : "Public"}</span>
+                                    <button 
+                                        className="button primary-button"
+                                        onClick={handleTogglePrivate}
+                                        disabled={loading}
+                                    >
+                                        {loading ? "Updating..." : isPrivate ? "Make Public" : "Make Private"}
+                                    </button>
+                                </div>
+                            </div>
 
-                        <button 
-                            onClick={() => setIsEditing(true)}
-                            className="button primary-button edit-btn"
-                        >
-                            Edit Profile
-                        </button>
-                    </>
-                )}
-            </div>
-        </main>
+                            <button 
+                                onClick={() => setIsEditing(true)}
+                                className="button primary-button edit-btn"
+                            >
+                                Edit Profile
+                            </button>
+                        </>
+                    )}
+                </div>
+            </main>
+        </PageWrapper>
     )
 }
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { createPost } from '../services/post.api'
 import { useNavigate } from 'react-router'
+import PageWrapper from '../../shared/PageWrapper'
 import "../style/create-post.scss"
 
 const CreatePost = () => {
@@ -49,43 +50,45 @@ const CreatePost = () => {
     }
 
     return (
-        <main className="create-post-page">
-            <div className="create-post-container">
-                <h1>Create Post</h1>
-                <form onSubmit={handleSubmit}>
-                    <textarea
-                        value={caption}
-                        onChange={(e) => setCaption(e.target.value)}
-                        placeholder="Write your caption..."
-                        maxLength="500"
-                    />
-                    
-                    <div className="image-input">
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageChange}
-                            id="image-input"
+        <PageWrapper>
+            <main className="create-post-page">
+                <div className="create-post-container">
+                    <h1>Create Post</h1>
+                    <form onSubmit={handleSubmit}>
+                        <textarea
+                            value={caption}
+                            onChange={(e) => setCaption(e.target.value)}
+                            placeholder="Write your caption..."
+                            maxLength="500"
                         />
-                        <label htmlFor="image-input">Choose Image</label>
-                    </div>
-
-                    {preview && (
-                        <div className="preview">
-                            <img src={preview} alt="Preview" />
+                        
+                        <div className="image-input">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                id="image-input"
+                            />
+                            <label htmlFor="image-input">Choose Image</label>
                         </div>
-                    )}
 
-                    <button 
-                        type="submit" 
-                        className="button primary-button"
-                        disabled={loading}
-                    >
-                        {loading ? "Creating..." : "Post"}
-                    </button>
-                </form>
-            </div>
-        </main>
+                        {preview && (
+                            <div className="preview">
+                                <img src={preview} alt="Preview" />
+                            </div>
+                        )}
+
+                        <button 
+                            type="submit" 
+                            className="button primary-button"
+                            disabled={loading}
+                        >
+                            {loading ? "Creating..." : "Post"}
+                        </button>
+                    </form>
+                </div>
+            </main>
+        </PageWrapper>
     )
 }
 

@@ -24,5 +24,11 @@ authRouter.post("/login", authController.loginController)
  */
 authRouter.get("/get-me", identifyUser, authController.getMeController)
 
+/**
+ * @route POST /api/auth/logout
+ * @desc Logout the user
+ * @access Public
+ */
+authRouter.post("/logout", authController.logoutController)
 
 module.exports = authRouter

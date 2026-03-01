@@ -120,7 +120,13 @@ async function getFeedController(req, res) {
                 post: post._id
             })
 
+            const isSaved = await saveModel.findOne({
+                user: user.id,
+                post: post._id
+            })
+
             post.isLiked = Boolean(isLiked)
+            post.isSaved = Boolean(isSaved)
 
             return post
         }))
@@ -287,7 +293,20 @@ async function getSavedPostsController(req, res) {
         })
         .sort({ createdAt: -1 })
 
-    const posts = saves.map(save => save.post)
+    const posts = await Promise.all(saves.map(async (save) => {
+        const post = save.post;
+
+        const isLiked = await likeModel.findOne({
+            user: req.user.username,
+            post: post._id
+        });
+
+        return {
+            ...post.toObject(),
+            isLiked: Boolean(isLiked),
+            isSaved: true
+        }
+    }))
 
     res.status(200).json({
         message: "Saved posts fetched successfully.",
@@ -349,6 +368,37 @@ async function getOwnFeedController(req, res) {
 }
 
 
+async function deletePostController(req, res) {
+    const userId = req.user.id
+    const postId = req.params.postId
+
+    const post = await postModel.findById(postId)
+
+    if (!post) {
+        return res.status(404).json({
+            message: "Post not found."
+        })
+    }
+
+    if (post.user.toString() !== userId) {
+        return res.status(403).json({
+            message: "You can only delete your own posts."
+        })
+    }
+
+    await postModel.findByIdAndDelete(postId)
+
+    // Also cleanup likes, comments, saves
+    await likeModel.deleteMany({ post: postId })
+    await commentModel.deleteMany({ post: postId })
+    await saveModel.deleteMany({ post: postId })
+
+    res.status(200).json({
+        message: "Post deleted successfully."
+    })
+}
+
+
 module.exports = {
     createPostController,
     getPostController,
@@ -363,5 +413,6 @@ module.exports = {
     unsavePostController,
     getSavedPostsController,
     togglePrivateAccountController,
-    getOwnFeedController
+    getOwnFeedController,
+    deletePostController
 }

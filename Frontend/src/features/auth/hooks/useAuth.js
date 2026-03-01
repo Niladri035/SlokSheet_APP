@@ -32,8 +32,21 @@ export const useAuth = () => {
 
     }
 
+    const handleLogout = async () => {
+        setLoading(true)
+        try {
+            const { logout } = await import("../services/auth.api")
+            await logout()
+            setUser(null)
+        } catch (error) {
+            console.error("Logout failed:", error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return {
-        user, loading, handleLogin, handleRegister, isPrivate, setIsPrivate, setUser
+        user, loading, handleLogin, handleRegister, handleLogout, isPrivate, setIsPrivate, setUser
     }
 
 }

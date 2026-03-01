@@ -52,16 +52,17 @@ const Comments = ({ postId }) => {
                     comments.map((comment) => (
                         <div key={comment._id} className="comment">
                             <div className="comment-header">
-                                <img src={comment.user.profileImage} alt="" />
-                                <p className="username">{comment.user.username}</p>
+                                <div>
+                                    <span className="username">{comment.user.username}</span>
+                                    <span className="comment-text">{comment.text}</span>
+                                </div>
+                                <button 
+                                    className="delete-btn"
+                                    onClick={() => handleDeleteComment(comment._id)}
+                                >
+                                    Delete
+                                </button>
                             </div>
-                            <p className="comment-text">{comment.text}</p>
-                            <button 
-                                className="delete-btn"
-                                onClick={() => handleDeleteComment(comment._id)}
-                            >
-                                Delete
-                            </button>
                         </div>
                     ))
                 ) : (
@@ -76,8 +77,8 @@ const Comments = ({ postId }) => {
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Add a comment..."
                 />
-                <button type="submit" disabled={loading}>
-                    {loading ? "..." : "Comment"}
+                <button type="submit" disabled={!newComment.trim() || loading}>
+                    {loading ? "..." : "Post"}
                 </button>
             </form>
         </div>

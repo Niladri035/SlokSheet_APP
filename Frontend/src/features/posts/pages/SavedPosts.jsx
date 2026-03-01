@@ -2,6 +2,23 @@ import React, { useEffect, useState } from 'react'
 import "../style/feed.scss"
 import Post from '../components/Post'
 import { getSavedPosts } from '../services/post.api'
+import { motion } from 'framer-motion'
+import PageWrapper from '../../shared/PageWrapper'
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.2
+        }
+    }
+}
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
+}
 
 const SavedPosts = () => {
     const [savedPosts, setSavedPosts] = useState(null)
@@ -23,6 +40,12 @@ const SavedPosts = () => {
         }
     }
 
+    const handleSaveToggle = (postId, isNowSaved) => {
+        if (!isNowSaved) {
+            setSavedPosts(prevPosts => prevPosts.filter(p => p._id !== postId))
+        }
+    }
+
     if(loading || !savedPosts) {
         return (<main><h1>Loading saved posts...</h1></main>)
     }
@@ -32,15 +55,26 @@ const SavedPosts = () => {
     }
 
     return (
-        <main className='feed-page'>
-            <div className="feed">
-                <div className="posts">
-                    {savedPosts.map(post => {
-                        return <Post key={post._id} user={post.user} post={post} />
-                    })}
+        <PageWrapper>
+            <main className='feed-page'>
+                <div className="feed">
+                    <motion.div 
+                        className="posts"
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="show"
+                    >
+                        {savedPosts.map(post => {
+                            return (
+                                <motion.div key={post._id} variants={itemVariants}>
+                                    <Post user={post.user} post={post} onSaveToggle={handleSaveToggle} />
+                                </motion.div>
+                            )
+                        })}
+                    </motion.div>
                 </div>
-            </div>
-        </main>
+            </main>
+        </PageWrapper>
     )
 }
 

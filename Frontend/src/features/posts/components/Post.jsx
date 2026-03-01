@@ -1,11 +1,29 @@
 import React, { useState } from 'react'
-import { likePost, unlikePost, savePost, unsavePost } from '../services/post.api'
+import { likePost, unlikePost, savePost, unsavePost, deletePost } from '../services/post.api'
+import { useAuth } from '../../auth/hooks/useAuth'
 import Comments from './Comments'
+import { motion, AnimatePresence } from 'framer-motion'
 
-const Post = ({ user, post }) => {
+const Post = ({ user, post, onSaveToggle }) => {
     const [isLiked, setIsLiked] = useState(post.isLiked || false)
     const [isSaved, setIsSaved] = useState(post.isSaved || false)
     const [showComments, setShowComments] = useState(false)
+    const [showBigHeart, setShowBigHeart] = useState(false)
+    const [isDeleted, setIsDeleted] = useState(false)
+    const { user: currentUser } = useAuth()
+
+    const handleDelete = async () => {
+        if (window.confirm("Are you sure you want to delete this post?")) {
+            try {
+                await deletePost(post._id)
+                setIsDeleted(true)
+            } catch (error) {
+                console.error("Failed to delete post", error)
+            }
+        }
+    }
+
+    if (isDeleted) return null
 
     const handleLike = async () => {
         try {
@@ -20,12 +38,22 @@ const Post = ({ user, post }) => {
         }
     }
 
+    const handleDoubleClickLike = async () => {
+        if (!isLiked) {
+            await handleLike()
+        }
+        setShowBigHeart(true)
+        setTimeout(() => setShowBigHeart(false), 1000)
+    }
+
     const handleSave = async () => {
         try {
             if (isSaved) {
                 await unsavePost(post._id)
+                if (onSaveToggle) onSaveToggle(post._id, false)
             } else {
                 await savePost(post._id)
+                if (onSaveToggle) onSaveToggle(post._id, true)
             }
             setIsSaved(!isSaved)
         } catch (error) {
@@ -41,50 +69,91 @@ const Post = ({ user, post }) => {
 
     return (
         <div className="post">
-            <div className="user">
-                <div className="img-wrapper">
-                    <img src={user.profileImage} alt="" />
+            <div className="user" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div className="img-wrapper">
+                        <img src={user?.profileImage || 'https://via.placeholder.com/150'} alt="" />
+                    </div>
+                    <p>{user?.username || 'Unknown User'}</p>
                 </div>
-                <p>{user.username}</p>
+                {currentUser?._id === user?._id && (
+                    <motion.button 
+                        whileHover={{ scale: 1.1, color: '#ff3040' }} 
+                        whileTap={{ scale: 0.9 }} 
+                        onClick={handleDelete}
+                        title="Delete Post"
+                        style={{ background: 'transparent', border: 'none', color: '#A8A8A8', cursor: 'pointer', display: 'flex', padding: 0 }}
+                    >
+                        <svg aria-label="Delete" fill="none" height="18" viewBox="0 0 24 24" width="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </motion.button>
+                )}
             </div>
-            <img src={post.imgUrl} alt="" />
+            <div className="post-image-container" style={{ position: 'relative' }} onDoubleClick={handleDoubleClickLike}>
+                <img src={post.imgUrl} alt="" style={{ display: 'block', width: '100%', userSelect: 'none' }} />
+                <AnimatePresence>
+                    {showBigHeart && (
+                        <motion.div
+                            initial={{ scale: 0, opacity: 0, x: '-50%', y: '-50%' }}
+                            animate={{ scale: 1.5, opacity: 1, x: '-50%', y: '-50%' }}
+                            exit={{ scale: 0, opacity: 0, x: '-50%', y: '-50%' }}
+                            transition={{ duration: 0.3, type: 'spring' }}
+                            style={{ position: 'absolute', top: '50%', left: '50%', pointerEvents: 'none' }}
+                        >
+                            <svg fill="white" height="100" viewBox="0 0 48 48" width="100">
+                                <path d="M34.6 3.1c-4.5 0-7.9 1.8-10.6 5.6-2.7-3.7-6.1-5.5-10.6-5.5C6 3.1 0 9.6 0 17.6c0 7.3 5.4 12 10.6 16.5.6.5 1.3 1.1 1.9 1.7l2.3 2c4.4 3.9 6.6 5.9 7.6 6.5.5.3 1.1.5 1.6.5s1.1-.2 1.6-.5c1-.6 2.8-2.2 7.8-6.8l2-1.8c.7-.6 1.3-1.2 2-1.7C42.7 29.6 48 25 48 17.6c0-8-6-14.5-13.4-14.5z" />
+                            </svg>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+            
             <div className="icons">
                 <div className="left">
-                    <button onClick={handleLike}>
-                        <svg
-                            className={isLiked ? "like" : ""}
-                            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12.001 4.52853C14.35 2.42 17.98 2.49 20.2426 4.75736C22.5053 7.02472 22.583 10.637 20.4786 12.993L11.9999 21.485L3.52138 12.993C1.41705 10.637 1.49571 7.01901 3.75736 4.75736C6.02157 2.49315 9.64519 2.41687 12.001 4.52853ZM18.827 6.1701C17.3279 4.66794 14.9076 4.60701 13.337 6.01687L12.0019 7.21524L10.6661 6.01781C9.09098 4.60597 6.67506 4.66808 5.17157 6.17157C3.68183 7.66131 3.60704 10.0473 4.97993 11.6232L11.9999 18.6543L19.0201 11.6232C20.3935 10.0467 20.319 7.66525 18.827 6.1701Z"></path>
-                        </svg>
-                    </button>
-                    <button onClick={() => setShowComments(!showComments)}>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M5.76282 17H20V5H4V18.3851L5.76282 17ZM6.45455 19L2 22.5V4C2 3.44772 2.44772 3 3 3H21C21.5523 3 22 3.44772 22 4V18C22 18.5523 21.5523 19 21 19H6.45455Z"></path>
-                        </svg>
-                    </button>
-                    <button onClick={handleShare}>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M13 14H11C7.54202 14 4.53953 15.9502 3.03239 18.8107C3.01093 18.5433 3 18.2729 3 18C3 12.4772 7.47715 8 13 8V2.5L23.5 11L13 19.5V14ZM11 12H15V15.3078L20.3214 11L15 6.69224V10H13C10.5795 10 8.41011 11.0749 6.94312 12.7735C8.20873 12.2714 9.58041 12 11 12Z"></path>
-                        </svg>
-                    </button>
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleLike}>
+                        {isLiked ? (
+                            <svg className="like" aria-label="Unlike" fill="currentColor" height="24" viewBox="0 0 48 48" width="24"><path d="M34.6 3.1c-4.5 0-7.9 1.8-10.6 5.6-2.7-3.7-6.1-5.5-10.6-5.5C6 3.1 0 9.6 0 17.6c0 7.3 5.4 12 10.6 16.5.6.5 1.3 1.1 1.9 1.7l2.3 2c4.4 3.9 6.6 5.9 7.6 6.5.5.3 1.1.5 1.6.5s1.1-.2 1.6-.5c1-.6 2.8-2.2 7.8-6.8l2-1.8c.7-.6 1.3-1.2 2-1.7C42.7 29.6 48 25 48 17.6c0-8-6-14.5-13.4-14.5z"></path></svg>
+                        ) : (
+                            <svg aria-label="Like" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M16.792 3.904A4.989 4.989 0 0 1 21.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 0 1 4.708-5.218 4.21 4.21 0 0 1 3.675 1.941c.84 1.175.98 1.763 1.12 1.763s.278-.588 1.11-1.766a4.17 4.17 0 0 1 3.679-1.938m0-2a6.155 6.155 0 0 0-4.89 2.191 6.073 6.073 0 0 0-4.89-2.191c-3.14-.02-5.904 2.37-5.904 5.714 0 4.293 3.324 5.992 5.918 8.318 2.08 1.868 3.655 3.251 4.314 3.868a1.597 1.597 0 0 0 2.155 0c.659-.617 2.233-1.999 4.314-3.868 2.594-2.326 5.918-4.025 5.918-8.318 0-3.344-2.763-5.734-5.904-5.714z"></path></svg>
+                        )}
+                    </motion.button>
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowComments(!showComments)}>
+                        <svg aria-label="Comment" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M20.656 17.008a9.993 9.993 0 1 0-3.59 3.615L22 22Z" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></path></svg>
+                    </motion.button>
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleShare}>
+                        <svg aria-label="Share Post" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><line fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2" x1="22" x2="9.218" y1="3" y2="10.083"></line><polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></polygon></svg>
+                    </motion.button>
                 </div>
                 <div className="right">
-                    <button onClick={handleSave}>
-                        <svg 
-                            className={isSaved ? "saved" : ""}
-                            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M5 2H19C19.5523 2 20 2.44772 20 3V22.1433C20 22.4194 19.7761 22.6434 19.5 22.6434C19.4061 22.6434 19.314 22.6168 19.2344 22.5669L12 18.0313L4.76559 22.5669C4.53163 22.7136 4.22306 22.6429 4.07637 22.4089C4.02647 22.3293 4 22.2373 4 22.1433V3C4 2.44772 4.44772 2 5 2ZM18 4H6V19.4324L12 15.6707L18 19.4324V4Z"></path>
-                        </svg>
-                    </button>
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleSave}>
+                        {isSaved ? (
+                            <svg className="saved" aria-label="Remove" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M20 22a.999.999 0 0 1-.687-.273L12 14.815l-7.313 6.912A1 1 0 0 1 3 21V3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1Z"></path></svg>
+                        ) : (
+                            <svg aria-label="Save" fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><polygon fill="none" points="20 21 12 13.44 4 21 4 3 20 3 20 21" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></polygon></svg>
+                        )}
+                    </motion.button>
                 </div>
             </div>
             <div className="bottom">
-                <p className="caption">{post.caption}</p>
+                <p className="caption">
+                    <span className="username">{user?.username || 'Unknown User'}</span>
+                    {post.caption}
+                </p>
             </div>
             
-            {showComments && (
-                <Comments postId={post._id} />
-            )}
+            <AnimatePresence>
+                {showComments && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                    >
+                        <Comments postId={post._id} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }

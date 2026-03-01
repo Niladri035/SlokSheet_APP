@@ -10,8 +10,8 @@ app.use(cookieParser())
 app.use(morgan("dev"))
 app.use(cors({
     credentials: true,
-    origin: ["http://localhost:5173", "http://localhost:5174"],
-    methods: [ "GET", "POST", "PUT", "DELETE" ],
+    origin: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
 }))
 
 /* require routes */

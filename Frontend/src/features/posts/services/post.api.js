@@ -34,6 +34,11 @@ export async function unlikePost(postId) {
     return response.data
 }
 
+export async function deletePost(postId) {
+    const response = await api.delete(`/api/posts/${postId}`)
+    return response.data
+}
+
 export async function createComment(postId, text) {
     const response = await api.post(`/api/posts/comment/${postId}`, { text })
     return response.data

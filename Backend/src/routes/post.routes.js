@@ -108,5 +108,11 @@ postRouter.get("/own-feed", identifyUser, postController.getOwnFeedController)
 
 
 
+/**
+ * @route DELETE /api/posts/:postId
+ * @description delete a post and associated likes/comments/saves
+ * @access private
+ */
+postRouter.delete("/:postId", identifyUser, postController.deletePostController)
 
 module.exports = postRouter
